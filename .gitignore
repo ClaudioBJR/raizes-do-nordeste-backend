@@ -1,0 +1,18 @@
+# Ambiente virtual Python
+.venv/
+venv/
+
+# Ficheiros de cache e testes
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Configuracao local e base de dados SQLite local
+.env
+*.db
+*.sqlite3
+
+# Editor e sistema operativo
+.vscode/
+.DS_Store
+Thumbs.db
