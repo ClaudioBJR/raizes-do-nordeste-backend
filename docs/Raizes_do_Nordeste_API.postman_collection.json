@@ -1,0 +1,345 @@
+{
+  "info": {
+    "name": "API Rede Raizes do Nordeste - Trilha Back-end",
+    "description": "Colecao de testes executaveis (positivos e negativos) cobrindo Auth JWT, RBAC, Multicanalidade (canalPedido), Estoque por Unidade, Pagamento Mock, Fidelidade, LGPD, Matriz e Auditoria.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "clienteToken", "value": "" },
+    { "key": "cozinhaToken", "value": "" },
+    { "key": "matrizToken", "value": "" },
+    { "key": "pedidoId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "01 - Auth e LGPD",
+      "item": [
+        {
+          "name": "T01 - Login Cliente (Salva clienteToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 e token retornado', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('clienteToken', data.accessToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente@raizesdonordeste.com.br\",\n  \"senha\": \"Senha@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "T01b - Login Cozinha (Salva cozinhaToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 e token cozinha salvo', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.collectionVariables.set('cozinhaToken', pm.response.json().accessToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cozinha@raizesdonordeste.com.br\",\n  \"senha\": \"Senha@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "T01c - Login Matriz (Salva matrizToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 e token matriz salvo', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.collectionVariables.set('matrizToken', pm.response.json().accessToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"matriz@raizesdonordeste.com.br\",\n  \"senha\": \"Senha@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "T02 - Consultar Meu Perfil (JWT Valido)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{clienteToken}}" }],
+            "url": { "raw": "{{baseUrl}}/usuarios/me", "host": ["{{baseUrl}}"], "path": ["usuarios", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Unidades e Cardapio",
+      "item": [
+        {
+          "name": "T03 - Listar Unidades (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/unidades?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["unidades"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "T04 - Consultar Cardapio da Unidade Recife (ID 1)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/unidades/1/cardapio?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["unidades", "1", "cardapio"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Pedidos Multicanal e Pagamento Mock",
+      "item": [
+        {
+          "name": "T05 - Criar Pedido Valido (Canal TOTEM)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Pedido criado com status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pedidoId', pm.response.json().pedidoId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{clienteToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": 1,\n  \"canalPedido\": \"TOTEM\",\n  \"itens\": [\n    { \"produtoId\": 1, \"quantidade\": 1 },\n    { \"produtoId\": 4, \"quantidade\": 2 }\n  ],\n  \"formaPagamento\": \"MOCK\",\n  \"usarPontosFidelidade\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
+          }
+        },
+        {
+          "name": "T06 - Filtrar Pedidos por Canal (?canalPedido=TOTEM)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{clienteToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos?canalPedido=TOTEM&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos"],
+              "query": [
+                { "key": "canalPedido", "value": "TOTEM" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "T07 - Pagamento Mock RECUSADO (Mantem AGUARDANDO_PAGAMENTO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{clienteToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": {{pedidoId}},\n  \"idempotencyKey\": \"postman-recusa-{{pedidoId}}\",\n  \"simularResultado\": \"RECUSADO\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/pagamentos/mock", "host": ["{{baseUrl}}"], "path": ["pagamentos", "mock"] }
+          }
+        },
+        {
+          "name": "T08 - Pagamento Mock APROVADO (Atualiza para EM_PREPARO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{clienteToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": {{pedidoId}},\n  \"idempotencyKey\": \"postman-aprov-{{pedidoId}}\",\n  \"simularResultado\": \"APROVADO\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/pagamentos/mock", "host": ["{{baseUrl}}"], "path": ["pagamentos", "mock"] }
+          }
+        },
+        {
+          "name": "T09 - Cozinha Atualiza Status para PRONTO",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{cozinhaToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PRONTO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos", "{{pedidoId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Fidelidade, Matriz e Auditoria",
+      "item": [
+        {
+          "name": "T10 - Consultar Saldo e Historico de Fidelidade",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{clienteToken}}" }],
+            "url": { "raw": "{{baseUrl}}/fidelidade/me", "host": ["{{baseUrl}}"], "path": ["fidelidade", "me"] }
+          }
+        },
+        {
+          "name": "T11 - Relatorio Consolidado da Matriz",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{matrizToken}}" }],
+            "url": { "raw": "{{baseUrl}}/relatorios/matriz", "host": ["{{baseUrl}}"], "path": ["relatorios", "matriz"] }
+          }
+        },
+        {
+          "name": "T12 - Consultar Logs de Auditoria (Acoes Sensiveis)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{matrizToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/auditoria/logs?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditoria", "logs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Cenarios Negativos (Erros Padronizados)",
+      "item": [
+        {
+          "name": "T13 - Acesso sem Token (401 NAO_AUTENTICADO)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
+          }
+        },
+        {
+          "name": "T14 - Cliente Acessando Relatorio da Matriz (403 SEM_PERMISSAO)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{clienteToken}}" }],
+            "url": { "raw": "{{baseUrl}}/relatorios/matriz", "host": ["{{baseUrl}}"], "path": ["relatorios", "matriz"] }
+          }
+        },
+        {
+          "name": "T15 - Pedido sem canalPedido (422 ERRO_VALIDACAO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{clienteToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": 1,\n  \"itens\": [{ \"produtoId\": 1, \"quantidade\": 1 }],\n  \"formaPagamento\": \"MOCK\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
+          }
+        },
+        {
+          "name": "T16 - Pedido com Produto Inexistente (404 RECURSO_NAO_ENCONTRADO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{clienteToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": 1,\n  \"canalPedido\": \"APP\",\n  \"itens\": [{ \"produtoId\": 999, \"quantidade\": 1 }],\n  \"formaPagamento\": \"MOCK\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
+          }
+        },
+        {
+          "name": "T17 - Pedido com Estoque Insuficiente (409 ESTOQUE_INSUFICIENTE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{clienteToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": 1,\n  \"canalPedido\": \"TOTEM\",\n  \"itens\": [{ \"produtoId\": 6, \"quantidade\": 50 }],\n  \"formaPagamento\": \"MOCK\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
+          }
+        }
+      ]
+    }
+  ]
+}
